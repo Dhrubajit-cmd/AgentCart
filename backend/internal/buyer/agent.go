@@ -303,8 +303,8 @@ RULES:
 	}
 
 	// 3. Create the chat session
-	// Using the newest, active 3.6 model to leverage modern tool capability natively
-	cs, err := client.Chats.Create(ctx, "gemini-3.6-flash", chatConfig, history)
+	// Using the newest, active 3.5 model to leverage modern tool capability natively
+	cs, err := client.Chats.Create(ctx, "gemini-3.5-flash", chatConfig, history)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create chat session: %w", err)
 	}
