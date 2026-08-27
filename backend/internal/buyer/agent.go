@@ -10,9 +10,8 @@ import (
 	"agentcart/internal/config"
 	"agentcart/internal/db"
 
-	"github.com/google/generative-ai-go/genai"
 	"github.com/lib/pq"
-	"google.golang.org/api/option"
+	"google.golang.org/genai"
 )
 
 // ToolAction represents an action performed by the AI during the chat session
@@ -205,18 +204,38 @@ func showCartTool(sessionID string) (string, error) {
 
 // ProcessAgentMessage handles AI reasoning, tool selections, and responses via Gemini
 func ProcessAgentMessage(ctx context.Context, req ChatRequest) (*ChatResponse, error) {
-	client, err := genai.NewClient(ctx, option.WithAPIKey(config.AppConfig.GeminiAPIKey))
+	// Initialize the client using the new official SDK config options
+	client, err := genai.NewClient(ctx, &genai.ClientConfig{
+		APIKey:  config.AppConfig.GeminiAPIKey,
+		Backend: genai.BackendGeminiAPI,
+	})
 	if err != nil {
 		return nil, fmt.Errorf("failed to create Gemini client: %w", err)
 	}
-	defer client.Close()
 
-	model := client.GenerativeModel("gemini-3.6-flash")
+	// 1. Build chat session structure from request history
+	var history []*genai.Content
+	for _, msg := range req.History {
+		role := "user"
+		if msg.Role == "model" {
+			role = "model"
+		}
+		parts := make([]*genai.Part, len(msg.Parts))
+		for i, p := range msg.Parts {
+			parts[i] = &genai.Part{Text: p}
+		}
+		history = append(history, &genai.Content{
+			Role:  role,
+			Parts: parts,
+		})
+	}
 
-	// Set system prompt parameters
-	model.SystemInstruction = &genai.Content{
-		Parts: []genai.Part{
-			genai.Text(`You are the AI Buyer Assistant for TechNest Accessories, a premium electronics accessories store.
+	// 2. Define chat configuration (system prompt and tools declarations)
+	chatConfig := &genai.GenerateContentConfig{
+		SystemInstruction: &genai.Content{
+			Parts: []*genai.Part{
+				{
+					Text: `You are the AI Buyer Assistant for TechNest Accessories, a premium electronics accessories store.
 Your goal is to help customers search the catalog, list items, manage their cart, and proceed to checkout.
 
 RULES:
@@ -225,94 +244,91 @@ RULES:
 3. NEVER make up products, prices, or mock ID values. If no items match, politely inform the user.
 4. All cart operations (adding, showing) MUST be done through the allowed tools.
 5. You CANNOT complete payments or checkouts directly. If the user wants to buy or checkout, call the "request_checkout" tool, explain that checkout is ready, and instruct them to click the "Proceed to Buy" button on their screen.
-6. Keep your answers concise, helpful, and shopping-focused. Do not engage in non-shopping conversations.`),
+6. Keep your answers concise, helpful, and shopping-focused. Do not engage in non-shopping conversations.`,
+				},
+			},
 		},
-	}
-
-	// Declare tools
-	model.Tools = []*genai.Tool{
-		{
-			FunctionDeclarations: []*genai.FunctionDeclaration{
-				{
-					Name:        "search_catalog",
-					Description: "Search for electronics accessories in the TechNest product catalog by keyword, name, or category.",
-					Parameters: &genai.Schema{
-						Type: genai.TypeObject,
-						Properties: map[string]*genai.Schema{
-							"query": {
-								Type:        genai.TypeString,
-								Description: "The search keyword (e.g. 'headphones', 'cable', 'charger', 'audio').",
+		Tools: []*genai.Tool{
+			{
+				FunctionDeclarations: []*genai.FunctionDeclaration{
+					{
+						Name:        "search_catalog",
+						Description: "Search for electronics accessories in the TechNest product catalog by keyword, name, or category.",
+						Parameters: &genai.Schema{
+							Type: genai.TypeObject,
+							Properties: map[string]*genai.Schema{
+								"query": {
+									Type:        genai.TypeString,
+									Description: "The search keyword (e.g. 'headphones', 'cable', 'charger', 'audio').",
+								},
 							},
+							Required: []string{"query"},
 						},
-						Required: []string{"query"},
 					},
-				},
-				{
-					Name:        "add_to_cart",
-					Description: "Add a product from the catalog to the guest shopping cart.",
-					Parameters: &genai.Schema{
-						Type: genai.TypeObject,
-						Properties: map[string]*genai.Schema{
-							"product_id": {
-								Type:        genai.TypeString,
-								Description: "The exact UUID of the product to add.",
+					{
+						Name:        "add_to_cart",
+						Description: "Add a product from the catalog to the guest shopping cart.",
+						Parameters: &genai.Schema{
+							Type: genai.TypeObject,
+							Properties: map[string]*genai.Schema{
+								"product_id": {
+									Type:        genai.TypeString,
+									Description: "The exact UUID of the product to add.",
+								},
+								"quantity": {
+									Type:        genai.TypeInteger,
+									Description: "The quantity of the product to add (minimum 1).",
+								},
 							},
-							"quantity": {
-								Type:        genai.TypeInteger,
-								Description: "The quantity of the product to add (minimum 1).",
-							},
+							Required: []string{"product_id", "quantity"},
 						},
-						Required: []string{"product_id", "quantity"},
 					},
-				},
-				{
-					Name:        "show_cart",
-					Description: "View the customer's current shopping cart items, total quantities, and checkout subtotals.",
-					Parameters: &genai.Schema{
-						Type: genai.TypeObject,
+					{
+						Name:        "show_cart",
+						Description: "View the customer's current shopping cart items, total quantities, and checkout subtotals.",
+						Parameters: &genai.Schema{
+							Type: genai.TypeObject,
+						},
 					},
-				},
-				{
-					Name:        "request_checkout",
-					Description: "Trigger the checkout flow and prepare the order for payment authorization.",
-					Parameters: &genai.Schema{
-						Type: genai.TypeObject,
+					{
+						Name:        "request_checkout",
+						Description: "Trigger the checkout flow and prepare the order for payment authorization.",
+						Parameters: &genai.Schema{
+							Type: genai.TypeObject,
+						},
 					},
 				},
 			},
 		},
 	}
 
-	// 1. Build chat session structure from request history
-	cs := model.StartChat()
-	for _, msg := range req.History {
-		role := "user"
-		if msg.Role == "model" {
-			role = "model"
-		}
-		parts := make([]genai.Part, len(msg.Parts))
-		for i, p := range msg.Parts {
-			parts[i] = genai.Text(p)
-		}
-		cs.History = append(cs.History, &genai.Content{
-			Role:  role,
-			Parts: parts,
-		})
+	// 3. Create the chat session
+	// Using the newest, active 3.6 model to leverage modern tool capability natively
+	cs, err := client.Chats.Create(ctx, "gemini-3.6-flash", chatConfig, history)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create chat session: %w", err)
 	}
 
-	// 2. Send the message to Gemini
-	resp, err := cs.SendMessage(ctx, genai.Text(req.Message))
+	// 4. Send the user message to Gemini
+	resp, err := cs.SendMessage(ctx, genai.Part{Text: req.Message})
 	if err != nil {
 		return nil, fmt.Errorf("gemini API error: %w", err)
 	}
 
 	actions := []ToolAction{}
 
-	// 3. Process Function Call loops (if the model chooses to call tools)
+	// 5. Process Function Call loops (if the model chooses to call tools)
 	for {
-		part := resp.Candidates[0].Content.Parts[0]
-		fun, ok := part.(genai.FunctionCall)
-		if !ok {
+		var funCall *genai.FunctionCall
+		if len(resp.Candidates) > 0 && resp.Candidates[0].Content != nil {
+			for _, part := range resp.Candidates[0].Content.Parts {
+				if part.FunctionCall != nil {
+					funCall = part.FunctionCall
+					break
+				}
+			}
+		}
+		if funCall == nil {
 			// No function call, regular text reply generated
 			break
 		}
@@ -321,15 +337,23 @@ RULES:
 		var toolErr error
 		var args interface{}
 
-		switch fun.Name {
+		switch funCall.Name {
 		case "search_catalog":
-			query := fun.Args["query"].(string)
+			query := funCall.Args["query"].(string)
 			args = map[string]string{"query": query}
 			result, toolErr = searchCatalogTool(query)
 
 		case "add_to_cart":
-			prodID := fun.Args["product_id"].(string)
-			qty := fun.Args["quantity"].(float64)
+			prodID := funCall.Args["product_id"].(string)
+			var qty float64
+			switch v := funCall.Args["quantity"].(type) {
+			case float64:
+				qty = v
+			case int:
+				qty = float64(v)
+			case int64:
+				qty = float64(v)
+			}
 			args = map[string]interface{}{"product_id": prodID, "quantity": qty}
 			result, toolErr = addToCartTool(req.SessionID, prodID, qty)
 
@@ -342,36 +366,39 @@ RULES:
 			result = `{"success": true, "message": "Checkout is initialized. Please click the 'Proceed to Buy' button in your cart drawer to complete the order."}`
 
 		default:
-			toolErr = fmt.Errorf("unknown tool name: %s", fun.Name)
+			toolErr = fmt.Errorf("unknown tool name: %s", funCall.Name)
 		}
 
 		if toolErr != nil {
-			log.Printf("Error executing tool %s: %v", fun.Name, toolErr)
+			log.Printf("Error executing tool %s: %v", funCall.Name, toolErr)
 			result = fmt.Sprintf(`{"error": "%s"}`, toolErr.Error())
 		}
 
 		actions = append(actions, ToolAction{
-			ToolName: fun.Name,
+			ToolName: funCall.Name,
 			Args:     args,
 			Result:   result,
 		})
 
 		// Send function response back to Gemini to continue conversational generation
-		resp, err = cs.SendMessage(ctx, genai.FunctionResponse{
-			Name:     fun.Name,
-			Response: map[string]interface{}{"result": result},
+		// Natively preserves previous turn's candidates (including reasoning thought signatures)
+		resp, err = cs.SendMessage(ctx, genai.Part{
+			FunctionResponse: &genai.FunctionResponse{
+				Name: funCall.Name,
+				Response: map[string]interface{}{"result": result},
+			},
 		})
 		if err != nil {
 			return nil, fmt.Errorf("failed to send tool result back to Gemini: %w", err)
 		}
 	}
 
-	// 4. Return final text reply
+	// 6. Return final text reply
 	var reply string
 	if len(resp.Candidates) > 0 && resp.Candidates[0].Content != nil {
 		for _, part := range resp.Candidates[0].Content.Parts {
-			if txt, ok := part.(genai.Text); ok {
-				reply += string(txt)
+			if part.Text != "" {
+				reply += part.Text
 			}
 		}
 	}
