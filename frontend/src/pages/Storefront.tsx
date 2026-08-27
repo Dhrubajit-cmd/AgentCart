@@ -91,7 +91,7 @@ const Storefront: React.FC = () => {
       }
 
       await fetchCart(sessionId);
-      setIsCartOpen(true); // Open drawer on addition for rich user feedback
+      setIsCartOpen(true); // Open drawer on addition
     } catch (err) {
       alert(err instanceof Error ? err.message : 'Failed to add item to cart');
     } finally {
@@ -133,53 +133,60 @@ const Storefront: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans selection:bg-sky-500 selection:text-slate-900">
+    <div className="min-h-screen bg-slate-100 text-slate-800 flex flex-col font-sans selection:bg-blue-200 selection:text-blue-900">
       
-      {/* Top Banner Alert */}
-      <div className="bg-sky-950/70 border-b border-sky-500/25 px-4 py-2 text-center text-xs font-semibold text-sky-300 backdrop-blur-md flex items-center justify-center gap-2">
+      {/* Sandbox Alert Banner */}
+      <div className="bg-amber-500 text-slate-950 px-4 py-1.5 text-center text-xs font-bold shadow-inner flex items-center justify-center gap-2">
         <span className="flex h-2 w-2 relative">
-          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-sky-400 opacity-75"></span>
-          <span className="relative inline-flex rounded-full h-2 w-2 bg-sky-500"></span>
+          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-slate-900 opacity-75"></span>
+          <span className="relative inline-flex rounded-full h-2 w-2 bg-slate-950"></span>
         </span>
-        Test Environment Active - Payments simulate standard sandbox testing only.
+        Sandbox Mode — Powered by Razorpay Standard Checkout in Test Mode.
       </div>
 
-      {/* Navbar */}
-      <header className="sticky top-0 z-40 bg-slate-950/80 backdrop-blur-xl border-b border-slate-900 px-6 py-4">
-        <div className="max-w-7xl mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-gradient-to-tr from-sky-500 to-indigo-600 rounded-xl flex items-center justify-center shadow-lg shadow-sky-500/10">
-              <span className="text-xl font-bold text-slate-950">A</span>
+      {/* Primary Header */}
+      <header className="sticky top-0 z-40 bg-blue-600 text-white shadow-md">
+        <div className="max-w-7xl mx-auto px-4 md:px-6 py-3.5 flex items-center justify-between gap-4">
+          
+          {/* Logo & Subtitle */}
+          <div className="flex items-center gap-3 shrink-0">
+            <div className="w-9 h-9 bg-white text-blue-600 rounded-lg flex items-center justify-center font-black text-lg shadow-sm">
+              AC
             </div>
             <div>
-              <h1 className="text-xl font-extrabold tracking-tight text-white">
-                AgentCart
-              </h1>
-              <p className="text-[10px] text-slate-400 font-medium">
-                TechNest Accessories Store
+              <div className="flex items-center gap-1.5">
+                <h1 className="text-lg font-black tracking-tight leading-none">AgentCart</h1>
+                <span className="bg-yellow-400 text-slate-950 text-[9px] font-black px-1.5 py-0.5 rounded uppercase leading-none">
+                  MVP
+                </span>
+              </div>
+              <p className="text-[10px] text-blue-100 font-medium mt-0.5">
+                TechNest Accessories Portal
               </p>
             </div>
           </div>
 
-          <div className="flex items-center gap-4">
-            {/* View Catalog Raw manifest (agent compatibility) */}
+          {/* Search Bar / Public Endpoint Link */}
+          <div className="hidden sm:flex flex-1 max-w-md relative">
             <a
               href={`${API_URL}/api/m/${STORE_SLUG}/.well-known/agent-commerce.json`}
               target="_blank"
               rel="noreferrer"
-              className="text-xs text-slate-400 hover:text-sky-400 bg-slate-900/60 border border-slate-800 px-3 py-2 rounded-xl transition duration-300 font-mono"
+              className="w-full text-center text-xs text-blue-200 hover:text-white bg-blue-700/50 hover:bg-blue-700/80 border border-blue-500/30 px-4 py-2 rounded-lg transition duration-200 font-mono flex items-center justify-center gap-1.5"
             >
-              /.well-known/agent-commerce.json
+              <span>🔗</span> Manifest: /.well-known/agent-commerce.json
             </a>
+          </div>
 
-            {/* Cart Trigger Badge */}
+          {/* Cart Icon */}
+          <div className="flex items-center gap-3 shrink-0">
             <button
               onClick={() => setIsCartOpen(true)}
-              className="relative bg-slate-900 border border-slate-850 hover:border-sky-500/30 p-2.5 rounded-xl transition duration-300 flex items-center justify-center gap-2 group cursor-pointer"
+              className="relative bg-blue-700 hover:bg-blue-800 px-4 py-2 rounded-lg border border-blue-500/20 transition duration-200 flex items-center gap-2 cursor-pointer font-bold text-sm shadow-sm"
             >
-              <span className="text-lg group-hover:scale-110 transition-transform">🛒</span>
+              <span>🛒</span> Cart
               {cart && cart.total_items > 0 ? (
-                <span className="absolute -top-1.5 -right-1.5 bg-sky-500 text-slate-950 text-[10px] font-bold h-5 w-5 rounded-full flex items-center justify-center border-2 border-slate-950 shadow-md">
+                <span className="bg-yellow-400 text-slate-950 text-[10px] font-bold px-1.5 py-0.5 rounded-full border border-blue-600">
                   {cart.total_items}
                 </span>
               ) : null}
@@ -188,34 +195,35 @@ const Storefront: React.FC = () => {
         </div>
       </header>
 
-      {/* Main Container */}
-      <main className="flex-1 max-w-7xl w-full mx-auto p-6 md:p-8 flex gap-8">
+      {/* Main Grid Content */}
+      <main className="flex-1 max-w-7xl w-full mx-auto p-4 md:p-6 flex flex-col xl:flex-row gap-6">
         
-        {/* Products Section */}
-        <section className="flex-1">
-          <div className="mb-8">
-            <h2 className="text-2xl md:text-3xl font-extrabold text-white tracking-tight mb-2">
-              Discover Accessories
+        {/* Products List */}
+        <section className="flex-grow">
+          {/* Section title */}
+          <div className="bg-white border border-slate-200 rounded-xl p-5 mb-6 shadow-sm">
+            <h2 className="text-xl font-bold text-slate-900 mb-1">
+              Top Accessories & Pairings
             </h2>
-            <p className="text-sm text-slate-400 max-w-2xl leading-relaxed">
-              Explore TechNest's handpicked, compatible premium add-ons. You can select products manually or use our AI conversational assistant to build your traveler cart.
+            <p className="text-xs text-slate-500 max-w-xl leading-relaxed">
+              Explore TechNest's electronics accessories. Select pairs manually or chat with our AI agent to purchase items matching your budget.
             </p>
           </div>
 
           {loadingProducts ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
               {[...Array(6)].map((_, idx) => (
-                <div key={idx} className="bg-slate-900/40 border border-slate-850 rounded-2xl h-80 animate-pulse" />
+                <div key={idx} className="bg-white border border-slate-200 rounded-xl h-72 animate-pulse" />
               ))}
             </div>
           ) : products.length === 0 ? (
-            <div className="bg-slate-900/30 border border-slate-850 rounded-2xl p-12 text-center text-slate-400">
-              <span className="text-4xl block mb-4">📭</span>
-              <p className="font-semibold">No products found in the catalog</p>
-              <p className="text-xs text-slate-500 mt-1">Please seed the catalog via backend helper.</p>
+            <div className="bg-white border border-slate-200 rounded-xl p-12 text-center text-slate-400 shadow-sm">
+              <span className="text-4xl block mb-3">📦</span>
+              <p className="font-semibold text-slate-700">Store catalog is empty</p>
+              <p className="text-xs text-slate-500 mt-0.5">Please seed products using the merchant seed helper.</p>
             </div>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
               {products.map((product) => (
                 <ProductCard
                   key={product.id}
@@ -228,22 +236,22 @@ const Storefront: React.FC = () => {
           )}
         </section>
 
-        {/* AI Buyer Chat Panel Sidebar Placeholder (Built in Phase 3) */}
-        <aside className="w-80 shrink-0 hidden xl:flex flex-col bg-slate-900/40 border border-slate-850 rounded-2xl p-6 h-[calc(100vh-12rem)] sticky top-28 items-center justify-center text-center">
-          <div className="w-12 h-12 bg-sky-500/10 border border-sky-500/20 text-sky-400 text-xl rounded-full flex items-center justify-center mb-4">
+        {/* Floating AI Buyer Chat Placeholder (Flipkart inspired sidebar) */}
+        <aside className="w-full xl:w-72 shrink-0 flex flex-col bg-white border border-slate-200 rounded-xl p-5 shadow-sm self-start xl:sticky xl:top-24">
+          <div className="w-10 h-10 bg-blue-50 border border-blue-100 text-blue-600 text-lg rounded-xl flex items-center justify-center mb-3">
             🤖
           </div>
-          <h3 className="text-white font-bold mb-1">AI Buyer Assistant</h3>
-          <p className="text-xs text-slate-400 leading-relaxed max-w-[200px]">
+          <h3 className="text-sm font-bold text-slate-900 mb-1">Conversational AI Buyer</h3>
+          <p className="text-xs text-slate-500 leading-relaxed mb-4">
             In Phase 3, you will be able to search the store, add items, and review compatible cross-sells directly in natural language chat.
           </p>
-          <div className="w-full mt-6 border-t border-slate-800/80 pt-4">
-            <span className="text-[10px] uppercase font-bold tracking-widest text-slate-600 block mb-2">Allowed Tools</span>
-            <div className="flex flex-wrap gap-1 justify-center">
+          <div className="border-t border-slate-100 pt-3">
+            <span className="text-[9px] uppercase font-bold tracking-wider text-slate-400 block mb-2">Available Actions:</span>
+            <div className="flex flex-wrap gap-1">
               {['search_catalog', 'add_to_cart', 'show_cart', 'request_checkout'].map((tool) => (
-                <code key={tool} className="text-[9px] bg-slate-950 text-slate-500 px-1.5 py-0.5 rounded font-mono">
+                <span key={tool} className="text-[9px] font-mono bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded border border-slate-200/50">
                   {tool}()
-                </code>
+                </span>
               ))}
             </div>
           </div>
@@ -251,7 +259,7 @@ const Storefront: React.FC = () => {
 
       </main>
 
-      {/* Cart Drawer Modal */}
+      {/* Cart Drawer Overlay */}
       <CartDrawer
         isOpen={isCartOpen}
         onClose={() => setIsCartOpen(false)}

@@ -29,47 +29,45 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onAddToCart, isAddin
   const inStock = product.stock_status === 'in_stock';
 
   return (
-    <div className="relative group bg-slate-800/60 backdrop-blur-md border border-slate-700/60 hover:border-sky-500/50 rounded-2xl p-5 flex flex-col justify-between transition-all duration-300 hover:shadow-[0_0_30px_rgba(14,165,233,0.15)] overflow-hidden">
-      {/* Glow Effect */}
-      <div className="absolute -inset-px bg-gradient-to-r from-sky-500/10 to-indigo-500/10 rounded-2xl opacity-0 group-hover:opacity-100 transition duration-500" />
-
-      <div className="relative z-10">
+    <div className="relative group bg-white border border-slate-200/80 hover:border-blue-500 rounded-xl p-5 flex flex-col justify-between transition-all duration-300 hover:shadow-lg overflow-hidden">
+      <div className="relative z-10 flex flex-col h-full">
         {/* Image Container */}
-        <div className="w-full h-48 rounded-xl overflow-hidden mb-4 bg-slate-900 border border-slate-700/40 relative">
+        <div className="w-full h-48 rounded-lg overflow-hidden mb-4 bg-slate-50 border border-slate-100 relative flex items-center justify-center">
           <img
             src={product.image_url}
             alt={product.name}
-            className="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-500"
+            className="max-h-full max-w-full object-contain transform group-hover:scale-102 transition-transform duration-300"
           />
-          <span className="absolute top-3 left-3 bg-sky-500/90 backdrop-blur-sm text-slate-900 text-xs font-semibold px-2.5 py-1 rounded-full uppercase tracking-wider">
+          <span className="absolute top-2.5 left-2.5 bg-slate-100 text-slate-700 text-[10px] font-bold px-2 py-0.5 rounded uppercase tracking-wider border border-slate-200">
             {product.category}
           </span>
           {!inStock && (
-            <span className="absolute inset-0 bg-slate-950/80 backdrop-blur-xs flex items-center justify-center text-rose-400 font-bold tracking-wide">
+            <span className="absolute inset-0 bg-white/90 flex items-center justify-center text-rose-600 font-extrabold tracking-wider text-sm">
               OUT OF STOCK
             </span>
           )}
         </div>
 
         {/* Title & Desc */}
-        <h3 className="text-xl font-bold text-white mb-2 tracking-tight group-hover:text-sky-400 transition-colors">
+        <h3 className="text-base font-bold text-slate-900 mb-1.5 line-clamp-1 group-hover:text-blue-600 transition-colors">
           {product.name}
         </h3>
-        <p className="text-sm text-slate-400 line-clamp-3 mb-4 leading-relaxed">
+        
+        <p className="text-xs text-slate-500 line-clamp-3 mb-4 leading-relaxed flex-grow">
           {product.description}
         </p>
 
         {/* Compatibility badging */}
         {product.compatibility && product.compatibility.length > 0 && (
-          <div className="mb-4">
-            <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider block mb-1">
-              Best Paired With:
+          <div className="mb-4 pt-3 border-t border-slate-100">
+            <span className="text-[9px] text-slate-400 font-bold uppercase tracking-wider block mb-1">
+              Compatible with:
             </span>
-            <div className="flex flex-wrap gap-1.5">
+            <div className="flex flex-wrap gap-1">
               {product.compatibility.map((item, idx) => (
                 <span
                   key={idx}
-                  className="text-[10px] bg-slate-900 text-sky-300/80 border border-sky-500/10 px-2 py-0.5 rounded-md"
+                  className="text-[9px] bg-blue-50 text-blue-600 px-2 py-0.5 rounded font-medium border border-blue-100/50"
                 >
                   {item}
                 </span>
@@ -79,24 +77,28 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onAddToCart, isAddin
         )}
       </div>
 
-      <div className="relative z-10 flex items-center justify-between mt-auto pt-4 border-t border-slate-700/30">
-        <span className="text-lg font-extrabold text-sky-400">
-          {formatPrice(product.price_paise)}
-        </span>
+      <div className="relative z-10 flex items-center justify-between mt-auto pt-4 border-t border-slate-100">
+        <div className="flex flex-col">
+          <span className="text-base font-extrabold text-slate-900">
+            {formatPrice(product.price_paise)}
+          </span>
+          <span className="text-[10px] text-green-600 font-medium">Free Delivery</span>
+        </div>
+        
         <button
           onClick={() => onAddToCart(product.id)}
           disabled={!inStock || isAdding}
-          className={`px-4 py-2.5 rounded-xl font-semibold text-xs tracking-wider transition-all duration-300 flex items-center gap-1.5 ${
+          className={`px-4 py-2 rounded font-bold text-xs transition-all duration-200 flex items-center gap-1.5 shadow-sm ${
             inStock
               ? isAdding
-                ? 'bg-slate-700 text-slate-400 cursor-not-allowed'
-                : 'bg-sky-600 hover:bg-sky-500 text-slate-950 hover:shadow-[0_0_15px_rgba(14,165,233,0.4)] cursor-pointer font-bold'
-              : 'bg-slate-800 text-slate-500 cursor-not-allowed'
+                ? 'bg-slate-100 text-slate-400 cursor-not-allowed border border-slate-200'
+                : 'bg-yellow-400 hover:bg-yellow-500 text-slate-900 hover:shadow active:scale-98 cursor-pointer border border-yellow-500/20'
+              : 'bg-slate-100 text-slate-400 cursor-not-allowed border border-slate-200'
           }`}
         >
           {isAdding ? (
             <svg
-              className="animate-spin h-3 w-3 text-slate-400"
+              className="animate-spin h-3.5 w-3.5 text-slate-400"
               xmlns="http://www.w3.org/2000/svg"
               fill="none"
               viewBox="0 0 24 24"
@@ -116,7 +118,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onAddToCart, isAddin
               />
             </svg>
           ) : null}
-          {isAdding ? 'ADDING...' : inStock ? 'ADD TO CART' : 'UNAVAILABLE'}
+          {isAdding ? 'Adding...' : inStock ? 'Add to Cart' : 'Out of Stock'}
         </button>
       </div>
     </div>
