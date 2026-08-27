@@ -211,7 +211,7 @@ func ProcessAgentMessage(ctx context.Context, req ChatRequest) (*ChatResponse, e
 	}
 	defer client.Close()
 
-	model := client.GenerativeModel("gemini-1.5-flash")
+	model := client.GenerativeModel("gemini-2.5-flash")
 
 	// Set system prompt parameters
 	model.SystemInstruction = &genai.Content{
