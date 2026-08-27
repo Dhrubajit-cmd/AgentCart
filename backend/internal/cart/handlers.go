@@ -15,7 +15,7 @@ import (
 type AddItemRequest struct {
 	SessionID string `json:"session_id" binding:"required"`
 	ProductID string `json:"product_id" binding:"required"`
-	Quantity  int    `json:"quantity" binding:"required,gte=0"`
+	Quantity  *int   `json:"quantity" binding:"required,gte=0"`
 }
 
 // CartItemResponse holds the item details with server-side calculated totals
@@ -59,8 +59,8 @@ func UpdateCartItem(c *gin.Context) {
 		return
 	}
 
-	if req.Quantity > inventory {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Requested quantity of " + name + " exceeds available stock (" + string(rune(inventory)) + ")"})
+	if *req.Quantity > inventory {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Requested quantity of " + name + " exceeds available stock"})
 		return
 	}
 
@@ -90,7 +90,7 @@ func UpdateCartItem(c *gin.Context) {
 	}
 
 	// 4. Update quantity or delete if 0
-	if req.Quantity <= 0 {
+	if *req.Quantity <= 0 {
 		_, err = tx.Exec("DELETE FROM cart_items WHERE cart_id = $1 AND product_id = $2", cartID, req.ProductID)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to remove item: " + err.Error()})
@@ -103,7 +103,7 @@ func UpdateCartItem(c *gin.Context) {
 			 VALUES ($1, $2, $3) 
 			 ON CONFLICT (cart_id, product_id) 
 			 DO UPDATE SET quantity = EXCLUDED.quantity`,
-			cartID, req.ProductID, req.Quantity,
+			cartID, req.ProductID, *req.Quantity,
 		)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update item: " + err.Error()})
