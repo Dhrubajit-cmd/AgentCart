@@ -3,6 +3,7 @@ import ProductCard from '../components/ProductCard';
 import type { Product } from '../components/ProductCard';
 import CartDrawer from '../components/CartDrawer';
 import type { CartData } from '../components/CartDrawer';
+import AIChat from '../components/AIChat';
 
 // Set backend URL (supports fallback to local or dynamic env)
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080';
@@ -236,25 +237,11 @@ const Storefront: React.FC = () => {
           )}
         </section>
 
-        {/* Floating AI Buyer Chat Placeholder (Flipkart inspired sidebar) */}
-        <aside className="w-full xl:w-72 shrink-0 flex flex-col bg-white border border-slate-200 rounded-xl p-5 shadow-sm self-start xl:sticky xl:top-24">
-          <div className="w-10 h-10 bg-blue-50 border border-blue-100 text-blue-600 text-lg rounded-xl flex items-center justify-center mb-3">
-            🤖
-          </div>
-          <h3 className="text-sm font-bold text-slate-900 mb-1">Conversational AI Buyer</h3>
-          <p className="text-xs text-slate-500 leading-relaxed mb-4">
-            In Phase 3, you will be able to search the store, add items, and review compatible cross-sells directly in natural language chat.
-          </p>
-          <div className="border-t border-slate-100 pt-3">
-            <span className="text-[9px] uppercase font-bold tracking-wider text-slate-400 block mb-2">Available Actions:</span>
-            <div className="flex flex-wrap gap-1">
-              {['search_catalog', 'add_to_cart', 'show_cart', 'request_checkout'].map((tool) => (
-                <span key={tool} className="text-[9px] font-mono bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded border border-slate-200/50">
-                  {tool}()
-                </span>
-              ))}
-            </div>
-          </div>
+        {/* Floating AI Buyer Chat Sidebar */}
+        <aside className="w-full xl:w-80 shrink-0 flex flex-col h-[500px] xl:h-[550px] xl:sticky xl:top-24 self-start">
+          {sessionId && (
+            <AIChat sessionID={sessionId} onCartUpdate={() => fetchCart(sessionId)} />
+          )}
         </aside>
 
       </main>

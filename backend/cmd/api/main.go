@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"agentcart/internal/auth"
+	"agentcart/internal/buyer"
 	"agentcart/internal/cart"
 	"agentcart/internal/catalog"
 	"agentcart/internal/config"
@@ -47,7 +48,10 @@ func main() {
 	r.GET("/api/cart", cart.GetCart)
 	r.POST("/api/cart/items", cart.UpdateCartItem)
 
-	// 8. Register protected merchant management routes
+	// 8. Register AI Buyer message endpoint
+	r.POST("/api/buyer/message", buyer.HandleChatMessage)
+
+	// 9. Register protected merchant management routes
 	merchantRoutes := r.Group("/api/merchant")
 	merchantRoutes.Use(middleware.AuthMiddleware())
 	{
@@ -60,7 +64,7 @@ func main() {
 		merchantRoutes.POST("/products/seed", merchant.SeedTechNestCatalog)
 	}
 
-	// 9. Launch the HTTP server
+	// 10. Launch the HTTP server
 	port := config.AppConfig.Port
 	log.Printf("Server listening on port %s", port)
 	if err := r.Run(":" + port); err != nil {
