@@ -15,7 +15,7 @@ It is designed for the **Razorpay Buildathon Track 01 (AI Growth & Agentic Comme
 
 ---
 
-## 🚀 Implemented Capabilities (Phases 1 & 2 Completed)
+## 🚀 Implemented Capabilities (Phases 1, 2 & 3 Completed)
 
 ### 1. Merchant Foundation & Seeded Catalog
 * Secure password hashing (bcrypt) and JWT session token generation for merchant admin tasks.
@@ -28,6 +28,12 @@ It is designed for the **Razorpay Buildathon Track 01 (AI Growth & Agentic Comme
 * Guest checkout sessions tracked via lightweight local storage session IDs.
 * **Server-side Recalculated Cart**: The client sends only the `product_id` and `quantity`. The Go backend queries master prices directly from the database to compute all subtotals and totals, completely eliminating client-side price-tampering exploits.
 * Smooth Cart Drawer containing item quantity controls and an explicit "Remove" (trash-bin) action.
+
+### 3. Conversational AI Buyer Assistant
+* Integrated Google Gemini SDK in Go using function calling tools.
+* Exposes conversational chat panel directly on the customer storefront.
+* Limits AI reasoning capabilities to 4 predefined tools: `search_catalog`, `add_to_cart`, `show_cart`, and `request_checkout` with strict backend validations.
+* Features transparent, user-friendly live tool execution logs directly in the chat panel.
 
 ---
 
